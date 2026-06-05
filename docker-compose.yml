@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:18.4
+    container_name: postgressql
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "123"
+      POSTGRES_DB: hotel_v1
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgres/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - private_network
+
+  backend:
+    build: ./backend
+    container_name: backend
+    depends_on:
+      - db
+    environment:
+      DB_HOST: localhost
+      BD_USER: postgres
+      BD_PASSWORD: 123
+      POSTGRES_DB: hotel_v1
+      DB_URL: jdbc:postgresql://localhost:5432/postgres
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hotel_v1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: hotel_v1
+      DB_USER: postgres
+      DB_PASSWORD: 123
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - public_network
+      - private_network
+    restart: on-failure
+
+volumes:
+  postgres_data:
+
+networks:
+  public_network:
+    driver: bridge
+  private_network:
+    driver: bridge
