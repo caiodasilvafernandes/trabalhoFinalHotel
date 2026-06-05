@@ -1,2 +1,2 @@
 # trabalhoFinalHotel
-Trabalho final para as disciplinas Backend, frontend ee
+Trabalho final para as disciplinas Backend, frontend e bando de dados
