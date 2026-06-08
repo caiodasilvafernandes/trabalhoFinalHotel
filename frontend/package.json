@@ -1,14 +1,4 @@
 {
-  "name": "frontend",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
     "react": "^19.2.6",
@@ -17,6 +7,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
+    "@biomejs/biome": "2.4.16",
     "@eslint/js": "^10.0.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@types/babel__core": "^7.20.5",
@@ -31,6 +22,19 @@
     "globals": "^17.6.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
+    "ultracite": "7.8.2",
     "vite": "^8.0.12"
-  }
+  },
+  "name": "frontend",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "check": "ultracite check",
+    "fix": "ultracite fix"
+  },
+  "type": "module",
+  "version": "0.0.0",
+  "private": true
 }
