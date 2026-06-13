@@ -7,29 +7,24 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-@Table(name = "guests")
 @Entity
+@Table(name = "services")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Guest {
+public class Service {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID idGuest;
+    private UUID idService;
 
-    private String name;
-    private String cpf;
-    private String phone;
-    private String email;
-
-    private LocalDateTime created_at = LocalDateTime.now();
+    private String serviceName;
+    private Double price;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "guest", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Reservation> reservations;
+    @OneToMany(mappedBy = "service", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<ServiceConsumption> consumptions;
 }

@@ -11,25 +11,25 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-@Table(name = "guests")
 @Entity
+@Table(name = "stays")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Guest {
+public class Stay {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID idGuest;
+    private UUID idStay;
 
-    private String name;
-    private String cpf;
-    private String phone;
-    private String email;
+    @OneToOne
+    @JoinColumn(name = "reservation_id")
+    private Reservation reservation;
 
-    private LocalDateTime created_at = LocalDateTime.now();
+    private LocalDateTime actualCheckIn;
+    private LocalDateTime actualCheckOut;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "guest", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Reservation> reservations;
+    @OneToMany(mappedBy = "stay", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<ServiceConsumption> consumptions;
 }
