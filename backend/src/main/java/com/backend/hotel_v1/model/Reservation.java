@@ -34,7 +34,6 @@ public class Reservation {
     private Date checkInDate;
     private Date checkOutDate;
 
-    @Enumerated(EnumType.STRING)
     private ReservationStatus status = ReservationStatus.PENDENTE;
 
     @JsonIgnore
