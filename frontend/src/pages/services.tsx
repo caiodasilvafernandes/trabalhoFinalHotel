@@ -29,7 +29,18 @@ function ServicesPage() {
   });
   const remove = useMutation({
     mutationFn: (id: string) => servicesApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["services"] });
+      const prev = qc.getQueryData<Service[]>(["services"]);
+      qc.setQueryData<Service[]>(["services"], (old) =>
+        old?.filter((s) => s.idService !== id)
+      );
+      return { prev };
+    },
+    onError: (_err, _id, ctx) => {
+      qc.setQueryData(["services"], ctx?.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["services"] }),
   });
 
   function open_(s?: Service) {

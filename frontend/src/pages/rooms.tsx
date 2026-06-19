@@ -32,7 +32,18 @@ function RoomsPage() {
   });
   const remove = useMutation({
     mutationFn: (id: string) => roomsApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["rooms"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["rooms"] });
+      const prev = qc.getQueryData<Room[]>(["rooms"]);
+      qc.setQueryData<Room[]>(["rooms"], (old) =>
+        old?.filter((r) => r.idRoom !== id)
+      );
+      return { prev };
+    },
+    onError: (_err, _id, ctx) => {
+      qc.setQueryData(["rooms"], ctx?.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["rooms"] }),
   });
 
   function open_(room?: Room) {

@@ -44,7 +44,18 @@ function ConsumptionsPage() {
   });
   const remove = useMutation({
     mutationFn: (id: string) => consumptionsApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["consumptions"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["consumptions"] });
+      const prev = qc.getQueryData<Consumption[]>(["consumptions"]);
+      qc.setQueryData<Consumption[]>(["consumptions"], (old) =>
+        old?.filter((c) => c.consumptionId !== id)
+      );
+      return { prev };
+    },
+    onError: (_err, _id, ctx) => {
+      qc.setQueryData(["consumptions"], ctx?.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["consumptions"] }),
   });
 
   function open_(c?: Consumption) {

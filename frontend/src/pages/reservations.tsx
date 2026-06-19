@@ -51,7 +51,18 @@ function ReservationsPage() {
   });
   const remove = useMutation({
     mutationFn: (id: string) => reservationsApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["reservations"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["reservations"] });
+      const prev = qc.getQueryData<Reservation[]>(["reservations"]);
+      qc.setQueryData<Reservation[]>(["reservations"], (old) =>
+        old?.filter((r) => r.idReservation !== id)
+      );
+      return { prev };
+    },
+    onError: (_err, _id, ctx) => {
+      qc.setQueryData(["reservations"], ctx?.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["reservations"] }),
   });
 
   function open_(r?: Reservation) {

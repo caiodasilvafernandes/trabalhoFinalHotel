@@ -39,7 +39,18 @@ function StaysPage() {
   });
   const remove = useMutation({
     mutationFn: (id: string) => staysApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stays"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["stays"] });
+      const prev = qc.getQueryData<Stay[]>(["stays"]);
+      qc.setQueryData<Stay[]>(["stays"], (old) =>
+        old?.filter((s) => s.idStay !== id)
+      );
+      return { prev };
+    },
+    onError: (_err, _id, ctx) => {
+      qc.setQueryData(["stays"], ctx?.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["stays"] }),
   });
 
   function open_(s?: Stay) {

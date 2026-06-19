@@ -29,7 +29,18 @@ function GuestsPage() {
   });
   const remove = useMutation({
     mutationFn: (id: string) => guestsApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["guests"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["guests"] });
+      const prev = qc.getQueryData<Guest[]>(["guests"]);
+      qc.setQueryData<Guest[]>(["guests"], (old) =>
+        old?.filter((g) => g.idGuest !== id)
+      );
+      return { prev };
+    },
+    onError: (_err, _id, ctx) => {
+      qc.setQueryData(["guests"], ctx?.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["guests"] }),
   });
 
   function open_(g?: Guest) {
