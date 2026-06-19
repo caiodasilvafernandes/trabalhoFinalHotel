@@ -9,27 +9,181 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './pages/__root'
+import { Route as StaysRouteImport } from './pages/stays'
+import { Route as ServicesRouteImport } from './pages/services'
+import { Route as RoomsRouteImport } from './pages/rooms'
+import { Route as ReservationsRouteImport } from './pages/reservations'
+import { Route as GuestsRouteImport } from './pages/guests'
+import { Route as ConsumptionsRouteImport } from './pages/consumptions'
+import { Route as IndexRouteImport } from './pages/index'
 
-export interface FileRoutesByFullPath {}
-export interface FileRoutesByTo {}
+const StaysRoute = StaysRouteImport.update({
+  id: '/stays',
+  path: '/stays',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesRoute = ServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoomsRoute = RoomsRouteImport.update({
+  id: '/rooms',
+  path: '/rooms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReservationsRoute = ReservationsRouteImport.update({
+  id: '/reservations',
+  path: '/reservations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuestsRoute = GuestsRouteImport.update({
+  id: '/guests',
+  path: '/guests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConsumptionsRoute = ConsumptionsRouteImport.update({
+  id: '/consumptions',
+  path: '/consumptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/consumptions': typeof ConsumptionsRoute
+  '/guests': typeof GuestsRoute
+  '/reservations': typeof ReservationsRoute
+  '/rooms': typeof RoomsRoute
+  '/services': typeof ServicesRoute
+  '/stays': typeof StaysRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/consumptions': typeof ConsumptionsRoute
+  '/guests': typeof GuestsRoute
+  '/reservations': typeof ReservationsRoute
+  '/rooms': typeof RoomsRoute
+  '/services': typeof ServicesRoute
+  '/stays': typeof StaysRoute
+}
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/consumptions': typeof ConsumptionsRoute
+  '/guests': typeof GuestsRoute
+  '/reservations': typeof ReservationsRoute
+  '/rooms': typeof RoomsRoute
+  '/services': typeof ServicesRoute
+  '/stays': typeof StaysRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: never
+  fullPaths:
+    | '/'
+    | '/consumptions'
+    | '/guests'
+    | '/reservations'
+    | '/rooms'
+    | '/services'
+    | '/stays'
   fileRoutesByTo: FileRoutesByTo
-  to: never
-  id: '__root__'
+  to:
+    | '/'
+    | '/consumptions'
+    | '/guests'
+    | '/reservations'
+    | '/rooms'
+    | '/services'
+    | '/stays'
+  id:
+    | '__root__'
+    | '/'
+    | '/consumptions'
+    | '/guests'
+    | '/reservations'
+    | '/rooms'
+    | '/services'
+    | '/stays'
   fileRoutesById: FileRoutesById
 }
-export interface RootRouteChildren {}
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {}
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  ConsumptionsRoute: typeof ConsumptionsRoute
+  GuestsRoute: typeof GuestsRoute
+  ReservationsRoute: typeof ReservationsRoute
+  RoomsRoute: typeof RoomsRoute
+  ServicesRoute: typeof ServicesRoute
+  StaysRoute: typeof StaysRoute
 }
 
-const rootRouteChildren: RootRouteChildren = {}
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/stays': {
+      id: '/stays'
+      path: '/stays'
+      fullPath: '/stays'
+      preLoaderRoute: typeof StaysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services': {
+      id: '/services'
+      path: '/services'
+      fullPath: '/services'
+      preLoaderRoute: typeof ServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rooms': {
+      id: '/rooms'
+      path: '/rooms'
+      fullPath: '/rooms'
+      preLoaderRoute: typeof RoomsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reservations': {
+      id: '/reservations'
+      path: '/reservations'
+      fullPath: '/reservations'
+      preLoaderRoute: typeof ReservationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guests': {
+      id: '/guests'
+      path: '/guests'
+      fullPath: '/guests'
+      preLoaderRoute: typeof GuestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/consumptions': {
+      id: '/consumptions'
+      path: '/consumptions'
+      fullPath: '/consumptions'
+      preLoaderRoute: typeof ConsumptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
+}
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  ConsumptionsRoute: ConsumptionsRoute,
+  GuestsRoute: GuestsRoute,
+  ReservationsRoute: ReservationsRoute,
+  RoomsRoute: RoomsRoute,
+  ServicesRoute: ServicesRoute,
+  StaysRoute: StaysRoute,
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
