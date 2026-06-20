@@ -65,7 +65,7 @@ public class StayService {
 
     public void deleteStay(UUID idStay) {
         try {
-            stayRepository.deleteById(idStay);
+            stayRepository.deleteStayById(idStay);
         } catch (Exception e) {
             throw new RuntimeException("Erro ao deletar estadia: " + e);
         }
