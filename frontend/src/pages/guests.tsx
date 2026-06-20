@@ -1,11 +1,14 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { type Guest, guestsApi } from "@/lib/api";
+import { type GuestForm, guestSchema } from "@/lib/schemas";
 
 export const Route = createFileRoute("/guests")({ component: GuestsPage });
 
-const emptyForm = { name: "", cpf: "", phone: "", email: "" };
+const emptyForm: GuestForm = { name: "", cpf: "", phone: "", email: "" };
 
 function GuestsPage() {
   const qc = useQueryClient();
@@ -15,16 +18,25 @@ function GuestsPage() {
   });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Guest | null>(null);
-  const [form, setForm] = useState(emptyForm);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<GuestForm>({
+    resolver: zodResolver(guestSchema),
+    defaultValues: emptyForm,
+  });
 
   const save = useMutation({
-    mutationFn: () =>
+    mutationFn: (data: GuestForm) =>
       editing
-        ? guestsApi.update(editing.idGuest, form)
-        : guestsApi.create(form),
+        ? guestsApi.update(editing.idGuest, data)
+        : guestsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["guests"] });
-      close();
+      close_();
     },
   });
   const remove = useMutation({
@@ -45,25 +57,30 @@ function GuestsPage() {
 
   function open_(g?: Guest) {
     setEditing(g ?? null);
-    setForm(
+    reset(
       g
         ? { name: g.name, cpf: g.cpf, phone: g.phone, email: g.email }
         : emptyForm
     );
     setOpen(true);
   }
-  function close() {
+  function close_() {
     setOpen(false);
     setEditing(null);
+    reset(emptyForm);
   }
-  function set(k: string, v: string) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
+
+  const fields: { key: keyof GuestForm; label: string }[] = [
+    { key: "name", label: "Nome" },
+    { key: "cpf", label: "CPF" },
+    { key: "phone", label: "Telefone" },
+    { key: "email", label: "Email" },
+  ];
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-bold text-2xl">Hóspedes</h1>
+        <h1 className="font-bold text-2xl">Hospedes</h1>
         <button
           className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
           onClick={() => open_()}
@@ -116,38 +133,42 @@ function GuestsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-96 rounded-lg bg-white p-6 shadow-xl">
             <h2 className="mb-4 font-semibold text-lg">
-              {editing ? "Editar Hóspede" : "Novo Hóspede"}
+              {editing ? "Editar Hospede" : "Novo Hospede"}
             </h2>
-            <div className="flex flex-col gap-3">
-              {(["name", "cpf", "phone", "email"] as const).map((k) => (
-                <label className="text-sm capitalize" key={k}>
-                  {k === "name"
-                    ? "Nome"
-                    : k === "phone"
-                      ? "Telefone"
-                      : k.toUpperCase()}
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={handleSubmit((data) => save.mutate(data))}
+            >
+              {fields.map(({ key, label }) => (
+                <label className="text-sm" key={key}>
+                  {label}
                   <input
+                    {...register(key)}
                     className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                    onChange={(e) => set(k, e.target.value)}
-                    value={form[k]}
                   />
+                  {errors[key] && (
+                    <span className="mt-0.5 block text-red-500 text-xs">
+                      {errors[key]?.message}
+                    </span>
+                  )}
                 </label>
               ))}
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                className="rounded border px-4 py-2 text-sm"
-                onClick={close}
-              >
-                Cancelar
-              </button>
-              <button
-                className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
-                onClick={() => save.mutate()}
-              >
-                Salvar
-              </button>
-            </div>
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  className="rounded border px-4 py-2 text-sm"
+                  onClick={close_}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
+                  type="submit"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

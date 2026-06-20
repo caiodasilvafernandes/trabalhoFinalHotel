@@ -1,11 +1,35 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { NumericFormat } from "react-number-format";
 import { type Service, servicesApi } from "@/lib/api";
+import { type ServiceForm, serviceSchema } from "@/lib/schemas";
 
 export const Route = createFileRoute("/services")({ component: ServicesPage });
 
-const emptyForm = { serviceName: "", price: 0 };
+const emptyForm: ServiceForm = { serviceName: "", price: 0 };
+
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="text-sm">
+      {label}
+      {children}
+      {error && (
+        <span className="mt-0.5 block text-red-500 text-xs">{error}</span>
+      )}
+    </label>
+  );
+}
 
 function ServicesPage() {
   const qc = useQueryClient();
@@ -15,16 +39,26 @@ function ServicesPage() {
   });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Service | null>(null);
-  const [form, setForm] = useState(emptyForm);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm<ServiceForm>({
+    resolver: zodResolver(serviceSchema),
+    defaultValues: emptyForm,
+  });
 
   const save = useMutation({
-    mutationFn: () =>
+    mutationFn: (data: ServiceForm) =>
       editing
-        ? servicesApi.update(editing.idService, form)
-        : servicesApi.create(form),
+        ? servicesApi.update(editing.idService, data)
+        : servicesApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["services"] });
-      close();
+      close_();
     },
   });
   const remove = useMutation({
@@ -45,12 +79,13 @@ function ServicesPage() {
 
   function open_(s?: Service) {
     setEditing(s ?? null);
-    setForm(s ? { serviceName: s.serviceName, price: s.price } : emptyForm);
+    reset(s ? { serviceName: s.serviceName, price: s.price } : emptyForm);
     setOpen(true);
   }
-  function close() {
+  function close_() {
     setOpen(false);
     setEditing(null);
+    reset(emptyForm);
   }
 
   return (
@@ -109,43 +144,51 @@ function ServicesPage() {
             <h2 className="mb-4 font-semibold text-lg">
               {editing ? "Editar Servico" : "Novo Servico"}
             </h2>
-            <div className="flex flex-col gap-3">
-              <label className="text-sm">
-                Nome
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={handleSubmit((data) => save.mutate(data))}
+            >
+              <Field error={errors.serviceName?.message} label="Nome">
                 <input
+                  {...register("serviceName")}
                   className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, serviceName: e.target.value }))
-                  }
-                  value={form.serviceName}
                 />
-              </label>
-              <label className="text-sm">
-                Preco (R$)
-                <input
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, price: Number(e.target.value) }))
-                  }
-                  type="number"
-                  value={form.price}
+              </Field>
+              <Field error={errors.price?.message} label="Preco (R$)">
+                <Controller
+                  control={control}
+                  name="price"
+                  render={({ field: { onChange, onBlur, name, value } }) => (
+                    <NumericFormat
+                      className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
+                      decimalScale={2}
+                      decimalSeparator=","
+                      name={name}
+                      onBlur={onBlur}
+                      onValueChange={(v) => onChange(v.floatValue ?? 0)}
+                      prefix="R$ "
+                      thousandSeparator="."
+                      value={value}
+                    />
+                  )}
                 />
-              </label>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                className="rounded border px-4 py-2 text-sm"
-                onClick={close}
-              >
-                Cancelar
-              </button>
-              <button
-                className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
-                onClick={() => save.mutate()}
-              >
-                Salvar
-              </button>
-            </div>
+              </Field>
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  className="rounded border px-4 py-2 text-sm"
+                  onClick={close_}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
+                  type="submit"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

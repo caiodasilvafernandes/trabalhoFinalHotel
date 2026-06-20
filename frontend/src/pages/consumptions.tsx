@@ -1,22 +1,46 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { NumericFormat } from "react-number-format";
 import {
   type Consumption,
   consumptionsApi,
   servicesApi,
   staysApi,
 } from "@/lib/api";
+import { type ConsumptionForm, consumptionSchema } from "@/lib/schemas";
 
 export const Route = createFileRoute("/consumptions")({
   component: ConsumptionsPage,
 });
 
-const emptyForm = { stayId: "", serviceId: "", quantity: 1 };
+const emptyForm: ConsumptionForm = { stayId: "", serviceId: "", quantity: 1 };
+
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="text-sm">
+      {label}
+      {children}
+      {error && (
+        <span className="mt-0.5 block text-red-500 text-xs">{error}</span>
+      )}
+    </label>
+  );
+}
 
 function ConsumptionsPage() {
   const qc = useQueryClient();
-  const { data = [], isLoading } = useQuery({
+  const { data: consumptions = [], isLoading } = useQuery({
     queryKey: ["consumptions"],
     queryFn: consumptionsApi.list,
   });
@@ -30,16 +54,30 @@ function ConsumptionsPage() {
   });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Consumption | null>(null);
-  const [form, setForm] = useState(emptyForm);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm<ConsumptionForm>({
+    resolver: zodResolver(consumptionSchema),
+    defaultValues: emptyForm,
+  });
+
+  // join local
+  const stayMap = Object.fromEntries(stays.map((s) => [s.idStay, s]));
+  const serviceMap = Object.fromEntries(services.map((s) => [s.idService, s]));
 
   const save = useMutation({
-    mutationFn: () =>
+    mutationFn: (data: ConsumptionForm) =>
       editing
-        ? consumptionsApi.update(editing.consumptionId, form)
-        : consumptionsApi.create(form),
+        ? consumptionsApi.update(editing.consumptionId, data)
+        : consumptionsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["consumptions"] });
-      close();
+      close_();
     },
   });
   const remove = useMutation({
@@ -60,20 +98,17 @@ function ConsumptionsPage() {
 
   function open_(c?: Consumption) {
     setEditing(c ?? null);
-    setForm(
+    reset(
       c
-        ? {
-            stayId: c.stay.idStay,
-            serviceId: c.service.idService,
-            quantity: c.quantity,
-          }
+        ? { stayId: c.stayId, serviceId: c.serviceId, quantity: c.quantity }
         : emptyForm
     );
     setOpen(true);
   }
-  function close() {
+  function close_() {
     setOpen(false);
     setEditing(null);
+    reset(emptyForm);
   }
 
   return (
@@ -94,7 +129,7 @@ function ConsumptionsPage() {
         <table className="w-full rounded bg-white text-sm shadow">
           <thead className="bg-zinc-100">
             <tr>
-              {["Estadia (hospede)", "Servico", "Qtd", ""].map((h) => (
+              {["Estadia", "Servico", "Qtd", ""].map((h) => (
                 <th className="px-4 py-2 text-left" key={h}>
                   {h}
                 </th>
@@ -102,27 +137,35 @@ function ConsumptionsPage() {
             </tr>
           </thead>
           <tbody>
-            {data.map((c) => (
-              <tr className="border-t" key={c.consumptionId}>
-                <td className="px-4 py-2">{c.stay.reservation.guest.name}</td>
-                <td className="px-4 py-2">{c.service.serviceName}</td>
-                <td className="px-4 py-2">{c.quantity}</td>
-                <td className="flex gap-2 px-4 py-2">
-                  <button
-                    className="text-blue-600 hover:underline"
-                    onClick={() => open_(c)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="text-red-600 hover:underline"
-                    onClick={() => remove.mutate(c.consumptionId)}
-                  >
-                    Excluir
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {consumptions.map((c) => {
+              const stay = stayMap[c.stayId];
+              const service = serviceMap[c.serviceId];
+              return (
+                <tr className="border-t" key={c.consumptionId}>
+                  <td className="px-4 py-2">
+                    {stay?.reservationId ?? c.stayId}
+                  </td>
+                  <td className="px-4 py-2">
+                    {service?.serviceName ?? c.serviceId}
+                  </td>
+                  <td className="px-4 py-2">{c.quantity}</td>
+                  <td className="flex gap-2 px-4 py-2">
+                    <button
+                      className="text-blue-600 hover:underline"
+                      onClick={() => open_(c)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="text-red-600 hover:underline"
+                      onClick={() => remove.mutate(c.consumptionId)}
+                    >
+                      Excluir
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -133,33 +176,27 @@ function ConsumptionsPage() {
             <h2 className="mb-4 font-semibold text-lg">
               {editing ? "Editar Consumo" : "Novo Consumo"}
             </h2>
-            <div className="flex flex-col gap-3">
-              <label className="text-sm">
-                Estadia
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={handleSubmit((data) => save.mutate(data))}
+            >
+              <Field error={errors.stayId?.message} label="Estadia">
                 <select
+                  {...register("stayId")}
                   className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, stayId: e.target.value }))
-                  }
-                  value={form.stayId}
                 >
                   <option value="">Selecione...</option>
                   {stays.map((s) => (
                     <option key={s.idStay} value={s.idStay}>
-                      {s.reservation.guest.name} —{" "}
-                      {s.reservation.room.roomNumber}
+                      {s.reservationId}
                     </option>
                   ))}
                 </select>
-              </label>
-              <label className="text-sm">
-                Servico
+              </Field>
+              <Field error={errors.serviceId?.message} label="Servico">
                 <select
+                  {...register("serviceId")}
                   className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, serviceId: e.target.value }))
-                  }
-                  value={form.serviceId}
                 >
                   <option value="">Selecione...</option>
                   {services.map((s) => (
@@ -168,34 +205,40 @@ function ConsumptionsPage() {
                     </option>
                   ))}
                 </select>
-              </label>
-              <label className="text-sm">
-                Quantidade
-                <input
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  min={1}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, quantity: Number(e.target.value) }))
-                  }
-                  type="number"
-                  value={form.quantity}
+              </Field>
+              <Field error={errors.quantity?.message} label="Quantidade">
+                <Controller
+                  control={control}
+                  name="quantity"
+                  render={({ field: { onChange, onBlur, name, value } }) => (
+                    <NumericFormat
+                      allowNegative={false}
+                      className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
+                      decimalScale={0}
+                      name={name}
+                      onBlur={onBlur}
+                      onValueChange={(v) => onChange(v.floatValue ?? 1)}
+                      value={value}
+                    />
+                  )}
                 />
-              </label>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                className="rounded border px-4 py-2 text-sm"
-                onClick={close}
-              >
-                Cancelar
-              </button>
-              <button
-                className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
-                onClick={() => save.mutate()}
-              >
-                Salvar
-              </button>
-            </div>
+              </Field>
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  className="rounded border px-4 py-2 text-sm"
+                  onClick={close_}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
+                  type="submit"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

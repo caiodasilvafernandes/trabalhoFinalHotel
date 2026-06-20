@@ -1,29 +1,50 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   guestsApi,
   type Reservation,
-  type ReservationStatus,
   reservationsApi,
   roomsApi,
 } from "@/lib/api";
+import { type ReservationForm, reservationSchema } from "@/lib/schemas";
 
 export const Route = createFileRoute("/reservations")({
   component: ReservationsPage,
 });
 
-const emptyForm = {
+const emptyForm: ReservationForm = {
   guestId: "",
   roomId: "",
   checkInDate: "",
   checkOutDate: "",
-  status: "pendente" as ReservationStatus,
 };
+
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="text-sm">
+      {label}
+      {children}
+      {error && (
+        <span className="mt-0.5 block text-red-500 text-xs">{error}</span>
+      )}
+    </label>
+  );
+}
 
 function ReservationsPage() {
   const qc = useQueryClient();
-  const { data = [], isLoading } = useQuery({
+  const { data: reservations = [], isLoading } = useQuery({
     queryKey: ["reservations"],
     queryFn: reservationsApi.list,
   });
@@ -37,16 +58,31 @@ function ReservationsPage() {
   });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Reservation | null>(null);
-  const [form, setForm] = useState(emptyForm);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ReservationForm>({
+    resolver: zodResolver(reservationSchema),
+    defaultValues: emptyForm,
+  });
+
+  const guestMap = Object.fromEntries(guests.map((g) => [g.idGuest, g]));
+  const roomMap = Object.fromEntries(rooms.map((r) => [r.idRoom, r]));
 
   const save = useMutation({
-    mutationFn: () =>
+    mutationFn: (data: ReservationForm) =>
       editing
-        ? reservationsApi.update(editing.idReservation, form)
-        : reservationsApi.create(form),
+        ? reservationsApi.update(editing.idReservation, {
+            ...data,
+            status: data.status ?? "pendente",
+          })
+        : reservationsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reservations"] });
-      close();
+      close_();
     },
   });
   const remove = useMutation({
@@ -67,25 +103,24 @@ function ReservationsPage() {
 
   function open_(r?: Reservation) {
     setEditing(r ?? null);
-    setForm(
+    reset(
       r
         ? {
-            guestId: r.guest.idGuest,
-            roomId: r.room.idRoom,
-            checkInDate: r.checkInDate,
-            checkOutDate: r.checkOutDate,
-            status: r.status,
+            guestId: r.guestId,
+            roomId: r.roomId,
+            checkInDate: typeof r.checkInDate === "string" ? r.checkInDate : "",
+            checkOutDate:
+              typeof r.checkOutDate === "string" ? r.checkOutDate : "",
+            status: r.status.toLowerCase() as ReservationForm["status"],
           }
         : emptyForm
     );
     setOpen(true);
   }
-  function close() {
+  function close_() {
     setOpen(false);
     setEditing(null);
-  }
-  function set(k: string, v: string) {
-    setForm((f) => ({ ...f, [k]: v }));
+    reset(emptyForm);
   }
 
   return (
@@ -106,7 +141,7 @@ function ReservationsPage() {
         <table className="w-full rounded bg-white text-sm shadow">
           <thead className="bg-zinc-100">
             <tr>
-              {["Hóspede", "Quarto", "Check-in", "Check-out", "Status", ""].map(
+              {["Hospede", "Quarto", "Check-in", "Check-out", "Status", ""].map(
                 (h) => (
                   <th className="px-4 py-2 text-left" key={h}>
                     {h}
@@ -116,13 +151,19 @@ function ReservationsPage() {
             </tr>
           </thead>
           <tbody>
-            {data.map((r) => (
+            {reservations.map((r) => (
               <tr className="border-t" key={r.idReservation}>
-                <td className="px-4 py-2">{r.guest.name}</td>
-                <td className="px-4 py-2">{r.room.roomNumber}</td>
-                <td className="px-4 py-2">{r.checkInDate}</td>
-                <td className="px-4 py-2">{r.checkOutDate}</td>
-                <td className="px-4 py-2 capitalize">{r.status}</td>
+                <td className="px-4 py-2">
+                  {guestMap[r.guestId]?.name ?? r.guestId}
+                </td>
+                <td className="px-4 py-2">
+                  {roomMap[r.roomId]?.roomNumber ?? r.roomId}
+                </td>
+                <td className="px-4 py-2">{String(r.checkInDate)}</td>
+                <td className="px-4 py-2">{String(r.checkOutDate)}</td>
+                <td className="px-4 py-2 capitalize">
+                  {r.status.toLowerCase()}
+                </td>
                 <td className="flex gap-2 px-4 py-2">
                   <button
                     className="text-blue-600 hover:underline"
@@ -149,13 +190,14 @@ function ReservationsPage() {
             <h2 className="mb-4 font-semibold text-lg">
               {editing ? "Editar Reserva" : "Nova Reserva"}
             </h2>
-            <div className="flex flex-col gap-3">
-              <label className="text-sm">
-                Hóspede
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={handleSubmit((data) => save.mutate(data))}
+            >
+              <Field error={errors.guestId?.message} label="Hospede">
                 <select
+                  {...register("guestId")}
                   className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) => set("guestId", e.target.value)}
-                  value={form.guestId}
                 >
                   <option value="">Selecione...</option>
                   {guests.map((g) => (
@@ -164,13 +206,11 @@ function ReservationsPage() {
                     </option>
                   ))}
                 </select>
-              </label>
-              <label className="text-sm">
-                Quarto
+              </Field>
+              <Field error={errors.roomId?.message} label="Quarto">
                 <select
+                  {...register("roomId")}
                   className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) => set("roomId", e.target.value)}
-                  value={form.roomId}
                 >
                   <option value="">Selecione...</option>
                   {rooms.map((r) => (
@@ -179,53 +219,48 @@ function ReservationsPage() {
                     </option>
                   ))}
                 </select>
-              </label>
-              <label className="text-sm">
-                Check-in
+              </Field>
+              <Field error={errors.checkInDate?.message} label="Check-in">
                 <input
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) => set("checkInDate", e.target.value)}
                   type="date"
-                  value={form.checkInDate}
+                  {...register("checkInDate")}
+                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
                 />
-              </label>
-              <label className="text-sm">
-                Check-out
+              </Field>
+              <Field error={errors.checkOutDate?.message} label="Check-out">
                 <input
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) => set("checkOutDate", e.target.value)}
                   type="date"
-                  value={form.checkOutDate}
+                  {...register("checkOutDate")}
+                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
                 />
-              </label>
+              </Field>
               {editing && (
-                <label className="text-sm">
-                  Status
+                <Field error={errors.status?.message} label="Status">
                   <select
+                    {...register("status")}
                     className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                    onChange={(e) => set("status", e.target.value)}
-                    value={form.status}
                   >
                     <option value="pendente">Pendente</option>
                     <option value="encerrado">Encerrado</option>
                   </select>
-                </label>
+                </Field>
               )}
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                className="rounded border px-4 py-2 text-sm"
-                onClick={close}
-              >
-                Cancelar
-              </button>
-              <button
-                className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
-                onClick={() => save.mutate()}
-              >
-                Salvar
-              </button>
-            </div>
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  className="rounded border px-4 py-2 text-sm"
+                  onClick={close_}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
+                  type="submit"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

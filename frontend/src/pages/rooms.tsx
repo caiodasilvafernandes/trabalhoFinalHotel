@@ -1,16 +1,40 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { type Room, type RoomStatus, type RoomType, roomsApi } from "@/lib/api";
+import { Controller, useForm } from "react-hook-form";
+import { NumericFormat } from "react-number-format";
+import { type Room, roomsApi } from "@/lib/api";
+import { type RoomForm, roomSchema } from "@/lib/schemas";
 
 export const Route = createFileRoute("/rooms")({ component: RoomsPage });
 
-const emptyForm = {
+const emptyForm: RoomForm = {
   roomNumber: "",
-  roomType: "individual" as RoomType,
+  roomType: "individual",
   dailyRate: 0,
-  roomStatus: "livre" as RoomStatus,
+  roomStatus: "livre",
 };
+
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="text-sm">
+      {label}
+      {children}
+      {error && (
+        <span className="mt-0.5 block text-red-500 text-xs">{error}</span>
+      )}
+    </label>
+  );
+}
 
 function RoomsPage() {
   const qc = useQueryClient();
@@ -20,14 +44,24 @@ function RoomsPage() {
   });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Room | null>(null);
-  const [form, setForm] = useState(emptyForm);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm<RoomForm>({
+    resolver: zodResolver(roomSchema),
+    defaultValues: emptyForm,
+  });
 
   const save = useMutation({
-    mutationFn: () =>
-      editing ? roomsApi.update(editing.idRoom, form) : roomsApi.create(form),
+    mutationFn: (data: RoomForm) =>
+      editing ? roomsApi.update(editing.idRoom, data) : roomsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["rooms"] });
-      close();
+      close_();
     },
   });
   const remove = useMutation({
@@ -46,26 +80,24 @@ function RoomsPage() {
     onSettled: () => qc.invalidateQueries({ queryKey: ["rooms"] }),
   });
 
-  function open_(room?: Room) {
-    setEditing(room ?? null);
-    setForm(
-      room
+  function open_(r?: Room) {
+    setEditing(r ?? null);
+    reset(
+      r
         ? {
-            roomNumber: room.roomNumber,
-            roomType: room.roomType,
-            dailyRate: room.dailyRate,
-            roomStatus: room.roomStatus,
+            roomNumber: r.roomNumber,
+            roomType: r.roomType.toLowerCase() as RoomForm["roomType"],
+            dailyRate: r.dailyRate,
+            roomStatus: r.roomStatus.toLowerCase() as RoomForm["roomStatus"],
           }
         : emptyForm
     );
     setOpen(true);
   }
-  function close() {
+  function close_() {
     setOpen(false);
     setEditing(null);
-  }
-  function set(k: string, v: unknown) {
-    setForm((f) => ({ ...f, [k]: v }));
+    reset(emptyForm);
   }
 
   return (
@@ -86,7 +118,7 @@ function RoomsPage() {
         <table className="w-full rounded bg-white text-sm shadow">
           <thead className="bg-zinc-100">
             <tr>
-              {["Número", "Tipo", "Diária (R$)", "Status", ""].map((h) => (
+              {["Numero", "Tipo", "Diaria (R$)", "Status", ""].map((h) => (
                 <th className="px-4 py-2 text-left" key={h}>
                   {h}
                 </th>
@@ -126,63 +158,71 @@ function RoomsPage() {
             <h2 className="mb-4 font-semibold text-lg">
               {editing ? "Editar Quarto" : "Novo Quarto"}
             </h2>
-            <div className="flex flex-col gap-3">
-              <label className="text-sm">
-                Número
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={handleSubmit((data) => save.mutate(data))}
+            >
+              <Field error={errors.roomNumber?.message} label="Numero">
                 <input
+                  {...register("roomNumber")}
                   className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) => set("roomNumber", e.target.value)}
-                  value={form.roomNumber}
                 />
-              </label>
-              <label className="text-sm">
-                Tipo
+              </Field>
+              <Field error={errors.roomType?.message} label="Tipo">
                 <select
+                  {...register("roomType")}
                   className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) => set("roomType", e.target.value)}
-                  value={form.roomType}
                 >
                   <option value="individual">Individual</option>
                   <option value="suite">Suite</option>
                 </select>
-              </label>
-              <label className="text-sm">
-                Diária (R$)
-                <input
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) => set("dailyRate", Number(e.target.value))}
-                  type="number"
-                  value={form.dailyRate}
+              </Field>
+              <Field error={errors.dailyRate?.message} label="Diaria (R$)">
+                <Controller
+                  control={control}
+                  name="dailyRate"
+                  render={({ field: { onChange, onBlur, name, value } }) => (
+                    <NumericFormat
+                      className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
+                      decimalScale={2}
+                      decimalSeparator=","
+                      name={name}
+                      onBlur={onBlur}
+                      onValueChange={(v) => onChange(v.floatValue ?? 0)}
+                      prefix="R$ "
+                      thousandSeparator="."
+                      value={value}
+                    />
+                  )}
                 />
-              </label>
-              <label className="text-sm">
-                Status
+              </Field>
+              <Field error={errors.roomStatus?.message} label="Status">
                 <select
+                  {...register("roomStatus")}
                   className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  onChange={(e) => set("roomStatus", e.target.value)}
-                  value={form.roomStatus}
                 >
                   <option value="livre">Livre</option>
                   <option value="ocupado">Ocupado</option>
                   <option value="reservado">Reservado</option>
                   <option value="limpando">Limpando</option>
                 </select>
-              </label>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                className="rounded border px-4 py-2 text-sm"
-                onClick={close}
-              >
-                Cancelar
-              </button>
-              <button
-                className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
-                onClick={() => save.mutate()}
-              >
-                Salvar
-              </button>
-            </div>
+              </Field>
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  className="rounded border px-4 py-2 text-sm"
+                  onClick={close_}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
+                  type="submit"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
