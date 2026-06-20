@@ -3,6 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Field } from "@/components/field";
+import { Modal } from "@/components/modal";
+import { StatusBadge } from "@/components/status-badge";
 import {
   guestsApi,
   type Reservation,
@@ -22,25 +25,8 @@ const emptyForm: ReservationForm = {
   checkOutDate: "",
 };
 
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="text-sm">
-      {label}
-      {children}
-      {error && (
-        <span className="mt-0.5 block text-red-500 text-xs">{error}</span>
-      )}
-    </label>
-  );
-}
+const inputCls =
+  "mt-1 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
 
 function ReservationsPage() {
   const qc = useQueryClient();
@@ -126,9 +112,9 @@ function ReservationsPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-bold text-2xl">Reservas</h1>
+        <h1 className="font-bold text-2xl text-zinc-900">Reservas</h1>
         <button
-          className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
+          className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-blue-700"
           onClick={() => open_()}
         >
           + Nova
@@ -136,133 +122,141 @@ function ReservationsPage() {
       </div>
 
       {isLoading ? (
-        <p>Carregando...</p>
+        <p className="text-sm text-zinc-500">Carregando...</p>
       ) : (
-        <table className="w-full rounded bg-white text-sm shadow">
-          <thead className="bg-zinc-100">
-            <tr>
-              {["Hospede", "Quarto", "Check-in", "Check-out", "Status", ""].map(
-                (h) => (
-                  <th className="px-4 py-2 text-left" key={h}>
+        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-zinc-200 border-b bg-zinc-50">
+                {[
+                  "Hóspede",
+                  "Quarto",
+                  "Check-in",
+                  "Check-out",
+                  "Status",
+                  "",
+                ].map((h) => (
+                  <th
+                    className="px-4 py-3 text-left font-semibold text-xs text-zinc-400 uppercase tracking-wider"
+                    key={h}
+                  >
                     {h}
                   </th>
-                )
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {reservations.map((r) => (
-              <tr className="border-t" key={r.idReservation}>
-                <td className="px-4 py-2">
-                  {guestMap[r.guestId]?.name ?? r.guestId}
-                </td>
-                <td className="px-4 py-2">
-                  {roomMap[r.roomId]?.roomNumber ?? r.roomId}
-                </td>
-                <td className="px-4 py-2">{String(r.checkInDate)}</td>
-                <td className="px-4 py-2">{String(r.checkOutDate)}</td>
-                <td className="px-4 py-2 capitalize">
-                  {r.status.toLowerCase()}
-                </td>
-                <td className="flex gap-2 px-4 py-2">
-                  <button
-                    className="text-blue-600 hover:underline"
-                    onClick={() => open_(r)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="text-red-600 hover:underline"
-                    onClick={() => remove.mutate(r.idReservation)}
-                  >
-                    Excluir
-                  </button>
-                </td>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {reservations.map((r) => (
+                <tr
+                  className="transition-colors hover:bg-zinc-50"
+                  key={r.idReservation}
+                >
+                  <td className="px-4 py-3 font-medium text-zinc-900">
+                    {guestMap[r.guestId]?.name ?? r.guestId}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {roomMap[r.roomId]?.roomNumber ?? r.roomId}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {String(r.checkInDate)}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {String(r.checkOutDate)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge value={r.status} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <button
+                        className="rounded border border-zinc-200 px-2.5 py-1 font-medium text-xs text-zinc-600 transition-colors hover:border-blue-200 hover:text-blue-600"
+                        onClick={() => open_(r)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="rounded border border-zinc-200 px-2.5 py-1 font-medium text-xs text-zinc-600 transition-colors hover:border-red-200 hover:text-red-600"
+                        onClick={() => remove.mutate(r.idReservation)}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-96 rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 font-semibold text-lg">
-              {editing ? "Editar Reserva" : "Nova Reserva"}
-            </h2>
-            <form
-              className="flex flex-col gap-3"
-              onSubmit={handleSubmit((data) => save.mutate(data))}
-            >
-              <Field error={errors.guestId?.message} label="Hospede">
-                <select
-                  {...register("guestId")}
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                >
-                  <option value="">Selecione...</option>
-                  {guests.map((g) => (
-                    <option key={g.idGuest} value={g.idGuest}>
-                      {g.name}
-                    </option>
-                  ))}
+        <Modal
+          onClose={close_}
+          title={editing ? "Editar Reserva" : "Nova Reserva"}
+        >
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={handleSubmit((data) => save.mutate(data))}
+          >
+            <Field error={errors.guestId?.message} label="Hóspede">
+              <select {...register("guestId")} className={inputCls}>
+                <option value="">Selecione...</option>
+                {guests.map((g) => (
+                  <option key={g.idGuest} value={g.idGuest}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field error={errors.roomId?.message} label="Quarto">
+              <select {...register("roomId")} className={inputCls}>
+                <option value="">Selecione...</option>
+                {rooms.map((r) => (
+                  <option key={r.idRoom} value={r.idRoom}>
+                    {r.roomNumber} — {r.roomType}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field error={errors.checkInDate?.message} label="Check-in">
+              <input
+                type="date"
+                {...register("checkInDate")}
+                className={inputCls}
+              />
+            </Field>
+            <Field error={errors.checkOutDate?.message} label="Check-out">
+              <input
+                type="date"
+                {...register("checkOutDate")}
+                className={inputCls}
+              />
+            </Field>
+            {editing && (
+              <Field error={errors.status?.message} label="Status">
+                <select {...register("status")} className={inputCls}>
+                  <option value="pendente">Pendente</option>
+                  <option value="encerrado">Encerrado</option>
                 </select>
               </Field>
-              <Field error={errors.roomId?.message} label="Quarto">
-                <select
-                  {...register("roomId")}
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                >
-                  <option value="">Selecione...</option>
-                  {rooms.map((r) => (
-                    <option key={r.idRoom} value={r.idRoom}>
-                      {r.roomNumber} — {r.roomType}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field error={errors.checkInDate?.message} label="Check-in">
-                <input
-                  type="date"
-                  {...register("checkInDate")}
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                />
-              </Field>
-              <Field error={errors.checkOutDate?.message} label="Check-out">
-                <input
-                  type="date"
-                  {...register("checkOutDate")}
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                />
-              </Field>
-              {editing && (
-                <Field error={errors.status?.message} label="Status">
-                  <select
-                    {...register("status")}
-                    className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                  >
-                    <option value="pendente">Pendente</option>
-                    <option value="encerrado">Encerrado</option>
-                  </select>
-                </Field>
-              )}
-              <div className="mt-2 flex justify-end gap-2">
-                <button
-                  className="rounded border px-4 py-2 text-sm"
-                  onClick={close_}
-                  type="button"
-                >
-                  Cancelar
-                </button>
-                <button
-                  className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
-                  type="submit"
-                >
-                  Salvar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            )}
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                className="rounded-lg border border-zinc-200 px-4 py-2 font-medium text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
+                onClick={close_}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button
+                className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-blue-700"
+                type="submit"
+              >
+                Salvar
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

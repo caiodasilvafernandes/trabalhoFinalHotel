@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Field } from "@/components/field";
+import { Modal } from "@/components/modal";
 import {
   guestsApi,
   reservationsApi,
@@ -20,25 +22,8 @@ const emptyForm: StayForm = {
   actualCheckOut: "",
 };
 
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="text-sm">
-      {label}
-      {children}
-      {error && (
-        <span className="mt-0.5 block text-red-500 text-xs">{error}</span>
-      )}
-    </label>
-  );
-}
+const inputCls =
+  "mt-1 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
 
 function StaysPage() {
   const qc = useQueryClient();
@@ -131,9 +116,9 @@ function StaysPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-bold text-2xl">Estadias</h1>
+        <h1 className="font-bold text-2xl text-zinc-900">Estadias</h1>
         <button
-          className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
+          className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-blue-700"
           onClick={() => open_()}
         >
           + Nova
@@ -141,126 +126,136 @@ function StaysPage() {
       </div>
 
       {isLoading ? (
-        <p>Carregando...</p>
+        <p className="text-sm text-zinc-500">Carregando...</p>
       ) : (
-        <table className="w-full rounded bg-white text-sm shadow">
-          <thead className="bg-zinc-100">
-            <tr>
-              {["Hospede", "Quarto", "Check-in real", "Check-out real", ""].map(
-                (h) => (
-                  <th className="px-4 py-2 text-left" key={h}>
+        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-zinc-200 border-b bg-zinc-50">
+                {[
+                  "Hóspede",
+                  "Quarto",
+                  "Check-in real",
+                  "Check-out real",
+                  "",
+                ].map((h) => (
+                  <th
+                    className="px-4 py-3 text-left font-semibold text-xs text-zinc-400 uppercase tracking-wider"
+                    key={h}
+                  >
                     {h}
                   </th>
-                )
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {stays.map((s) => {
-              const res = reservationMap[s.reservationId];
-              const guest = res ? guestMap[res.guestId] : undefined;
-              const room = res ? roomMap[res.roomId] : undefined;
-              return (
-                <tr className="border-t" key={s.idStay}>
-                  <td className="px-4 py-2">{guest?.name ?? "-"}</td>
-                  <td className="px-4 py-2">{room?.roomNumber ?? "-"}</td>
-                  <td className="px-4 py-2">
-                    {s.actualCheckIn
-                      ? new Date(s.actualCheckIn).toLocaleString("pt-BR")
-                      : "-"}
-                  </td>
-                  <td className="px-4 py-2">
-                    {s.actualCheckOut
-                      ? new Date(s.actualCheckOut).toLocaleString("pt-BR")
-                      : "-"}
-                  </td>
-                  <td className="flex gap-2 px-4 py-2">
-                    <button
-                      className="text-blue-600 hover:underline"
-                      onClick={() => open_(s)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="text-red-600 hover:underline"
-                      onClick={() => remove.mutate(s.idStay)}
-                    >
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {stays.map((s) => {
+                const res = reservationMap[s.reservationId];
+                const guest = res ? guestMap[res.guestId] : undefined;
+                const room = res ? roomMap[res.roomId] : undefined;
+                return (
+                  <tr
+                    className="transition-colors hover:bg-zinc-50"
+                    key={s.idStay}
+                  >
+                    <td className="px-4 py-3 font-medium text-zinc-900">
+                      {guest?.name ?? "-"}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600">
+                      {room?.roomNumber ?? "-"}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600">
+                      {s.actualCheckIn
+                        ? new Date(s.actualCheckIn).toLocaleString("pt-BR")
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600">
+                      {s.actualCheckOut
+                        ? new Date(s.actualCheckOut).toLocaleString("pt-BR")
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <button
+                          className="rounded border border-zinc-200 px-2.5 py-1 font-medium text-xs text-zinc-600 transition-colors hover:border-blue-200 hover:text-blue-600"
+                          onClick={() => open_(s)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="rounded border border-zinc-200 px-2.5 py-1 font-medium text-xs text-zinc-600 transition-colors hover:border-red-200 hover:text-red-600"
+                          onClick={() => remove.mutate(s.idStay)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-96 rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 font-semibold text-lg">
-              {editing ? "Editar Estadia" : "Nova Estadia"}
-            </h2>
-            <form
-              className="flex flex-col gap-3"
-              onSubmit={handleSubmit((data) => save.mutate(data))}
+        <Modal
+          onClose={close_}
+          title={editing ? "Editar Estadia" : "Nova Estadia"}
+        >
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={handleSubmit((data) => save.mutate(data))}
+          >
+            <Field error={errors.reservationId?.message} label="Reserva">
+              <select {...register("reservationId")} className={inputCls}>
+                <option value="">Selecione...</option>
+                {reservations.map((r) => {
+                  const g = guestMap[r.guestId];
+                  const rm = roomMap[r.roomId];
+                  return (
+                    <option key={r.idReservation} value={r.idReservation}>
+                      {g?.name ?? r.guestId} — {rm?.roomNumber ?? r.roomId} (
+                      {String(r.checkInDate)})
+                    </option>
+                  );
+                })}
+              </select>
+            </Field>
+            <Field error={errors.actualCheckIn?.message} label="Check-in real">
+              <input
+                type="datetime-local"
+                {...register("actualCheckIn")}
+                className={inputCls}
+              />
+            </Field>
+            <Field
+              error={errors.actualCheckOut?.message}
+              label="Check-out real (opcional)"
             >
-              <Field error={errors.reservationId?.message} label="Reserva">
-                <select
-                  {...register("reservationId")}
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                >
-                  <option value="">Selecione...</option>
-                  {reservations.map((r) => {
-                    const g = guestMap[r.guestId];
-                    const rm = roomMap[r.roomId];
-                    return (
-                      <option key={r.idReservation} value={r.idReservation}>
-                        {g?.name ?? r.guestId} — {rm?.roomNumber ?? r.roomId} (
-                        {String(r.checkInDate)})
-                      </option>
-                    );
-                  })}
-                </select>
-              </Field>
-              <Field
-                error={errors.actualCheckIn?.message}
-                label="Check-in real"
+              <input
+                type="datetime-local"
+                {...register("actualCheckOut")}
+                className={inputCls}
+              />
+            </Field>
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                className="rounded-lg border border-zinc-200 px-4 py-2 font-medium text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
+                onClick={close_}
+                type="button"
               >
-                <input
-                  type="datetime-local"
-                  {...register("actualCheckIn")}
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                />
-              </Field>
-              <Field
-                error={errors.actualCheckOut?.message}
-                label="Check-out real (opcional)"
+                Cancelar
+              </button>
+              <button
+                className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-blue-700"
+                type="submit"
               >
-                <input
-                  type="datetime-local"
-                  {...register("actualCheckOut")}
-                  className="mt-1 w-full rounded border px-3 py-1.5 text-sm"
-                />
-              </Field>
-              <div className="mt-2 flex justify-end gap-2">
-                <button
-                  className="rounded border px-4 py-2 text-sm"
-                  onClick={close_}
-                  type="button"
-                >
-                  Cancelar
-                </button>
-                <button
-                  className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
-                  type="submit"
-                >
-                  Salvar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+                Salvar
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );
