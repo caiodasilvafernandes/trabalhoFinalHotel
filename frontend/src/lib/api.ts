@@ -9,7 +9,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(`${res.status} ${res.statusText}`);
   }
   const text = await res.text();
-  return text ? JSON.parse(text) : undefined;
+  if (!text) {
+    return undefined as T;
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return undefined as T;
+  }
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -34,21 +41,23 @@ export interface Guest {
   phone: string;
 }
 
+// Shape returned by GET /reservation (ReservationResDto — flat)
 export interface Reservation {
   checkInDate: string;
   checkOutDate: string;
-  guest: Guest;
+  guestId: string;
   idReservation: string;
   reservationDate: string;
-  room: Room;
+  roomId: string;
   status: ReservationStatus;
 }
 
+// Shape returned by GET /stay (StayResDto — flat)
 export interface Stay {
   actualCheckIn: string;
   actualCheckOut: string | null;
   idStay: string;
-  reservation: Reservation;
+  reservationId: string;
 }
 
 export interface Service {
@@ -57,23 +66,35 @@ export interface Service {
   serviceName: string;
 }
 
+// Shape returned by GET /consumption (ServiceConsumptionResDto — flat)
 export interface Consumption {
   consumptionId: string;
   quantity: number;
-  service: Service;
-  stay: Stay;
+  serviceId: string;
+  stayId: string;
 }
 
 // ─── Rooms ────────────────────────────────────────────────────────────────────
 
+function toRoomPayload(data: Omit<Room, "idRoom">) {
+  return {
+    ...data,
+    roomType: data.roomType.toUpperCase(),
+    roomStatus: data.roomStatus.toUpperCase(),
+  };
+}
+
 export const roomsApi = {
   list: () => request<Room[]>("/room?tam=100"),
   create: (data: Omit<Room, "idRoom">) =>
-    request<Room>("/room", { method: "POST", body: JSON.stringify(data) }),
+    request<Room>("/room", {
+      method: "POST",
+      body: JSON.stringify(toRoomPayload(data)),
+    }),
   update: (id: string, data: Omit<Room, "idRoom">) =>
     request<Room>(`/room?idRoom=${id}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: JSON.stringify(toRoomPayload(data)),
     }),
   delete: (id: string) =>
     request<void>(`/room?idRoom=${id}`, { method: "DELETE" }),
@@ -120,7 +141,7 @@ export const reservationsApi = {
   ) =>
     request<Reservation>(`/reservation?idReservation=${id}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, status: data.status.toUpperCase() }),
     }),
   delete: (id: string) =>
     request<void>(`/reservation?idReservation=${id}`, { method: "DELETE" }),
