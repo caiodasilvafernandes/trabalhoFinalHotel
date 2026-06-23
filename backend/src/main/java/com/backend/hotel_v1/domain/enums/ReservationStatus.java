@@ -2,9 +2,11 @@ package com.backend.hotel_v1.domain.enums;
 
 public enum ReservationStatus {
     PENDENTE("pendente"),
-    ENCERRADO("encerrado");
+    CONFIRMADA("confirmada"),
+    ENCERRADO("encerrado"),
+    CANCELADA("cancelada");
 
-    private String status;
+    private final String status;
 
     ReservationStatus(String status){
         this.status = status;

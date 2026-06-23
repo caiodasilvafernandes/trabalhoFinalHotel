@@ -14,4 +14,7 @@ public interface ServiceRepository extends JpaRepository<Service, UUID> {
     @Query("SELECT s FROM Service s WHERE " +
            "(:serviceName = '' OR s.serviceName LIKE %:serviceName%)")
     Page<Service> queryGetFilteredServices(@Param("serviceName") String serviceName, Pageable pageable);
+
+    // Método derivado para filtro por nome
+    Page<Service> findByServiceNameContainingIgnoreCase(String serviceName, Pageable pageable);
 }

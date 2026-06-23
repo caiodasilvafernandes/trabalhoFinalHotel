@@ -6,18 +6,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.UUID;
-
 @Entity
 @Table(name = "service_consumptions")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServiceConsumption {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID consumptionId;
+public class ServiceConsumption extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "stay_id")

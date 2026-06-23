@@ -4,21 +4,20 @@ import com.backend.hotel_v1.domain.dto.ReservationReqDto;
 import com.backend.hotel_v1.domain.dto.ReservationResDto;
 import com.backend.hotel_v1.domain.enums.ReservationStatus;
 import com.backend.hotel_v1.domain.repositories.ReservationRepository;
+import com.backend.hotel_v1.exception.ResourceNotFoundException;
 import com.backend.hotel_v1.model.Guest;
 import com.backend.hotel_v1.model.Reservation;
 import com.backend.hotel_v1.model.Room;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 @Service
-public class ReservationService {
+public class ReservationService implements CrudService<ReservationResDto> {
 
     @Autowired
     private ReservationRepository reservationRepository;
@@ -29,9 +28,9 @@ public class ReservationService {
     @Autowired
     private RoomService roomService;
 
-    public Reservation createReservation(ReservationReqDto data) {
-        Guest guest = guestService.findGuest(data.guestId());
-        Room room = roomService.findRoom(data.roomId());
+    public ReservationResDto createReservation(ReservationReqDto data) {
+        Guest guest = guestService.findGuestEntity(data.guestId());
+        Room room = roomService.findRoomEntity(data.roomId());
 
         Reservation reservation = new Reservation();
         reservation.setGuest(guest);
@@ -42,35 +41,41 @@ public class ReservationService {
         reservation.setStatus(data.status() != null ? data.status() : ReservationStatus.PENDENTE);
 
         reservationRepository.save(reservation);
-        return reservation;
+        return convertToResDto(reservation);
     }
 
-    public Reservation findReservation(UUID idReservation) {
-        return reservationRepository.findById(idReservation)
-                .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada"));
+    @Override
+    public ReservationResDto findById(UUID id) {
+        return findById(id, false);
     }
 
-    public List<ReservationResDto> getFilteredReservations(int pag, int tam, String status, UUID guestId, UUID roomId) {
+    // Sobrecarga de método
+    public ReservationResDto findById(UUID id, boolean activeOnly) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva não encontrada"));
+        if (activeOnly && reservation.getStatus() == ReservationStatus.ENCERRADO) {
+            throw new ResourceNotFoundException("Reserva já encerrada");
+        }
+        return convertToResDto(reservation);
+    }
+
+    public Reservation findReservationEntity(UUID id) {
+        return reservationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva não encontrada"));
+    }
+
+    public Page<ReservationResDto> getFilteredReservations(String status, UUID guestId, UUID roomId, Pageable pageable) {
         ReservationStatus reservationStatus = null;
-        try { reservationStatus = (status != null && !status.isEmpty()) ? ReservationStatus.valueOf(status) : null; } catch (IllegalArgumentException ignored) {}
+        try { reservationStatus = (status != null && !status.isEmpty()) ? ReservationStatus.valueOf(status.toUpperCase()) : null; } catch (Exception ignored) {}
 
-        Pageable pageable = PageRequest.of(pag, tam);
         Page<Reservation> reservations = reservationRepository.queryGetFilteredReservations(reservationStatus, guestId, roomId, pageable);
-        return reservations.map(r -> new ReservationResDto(
-                r.getIdReservation(),
-                r.getGuest().getIdGuest(),
-                r.getRoom().getIdRoom(),
-                r.getReservationDate(),
-                r.getCheckInDate(),
-                r.getCheckOutDate(),
-                r.getStatus()
-        )).stream().toList();
+        return reservations.map(this::convertToResDto);
     }
 
-    public Reservation updateReservation(UUID idReservation, ReservationReqDto data) {
-        Reservation reservation = findReservation(idReservation);
-        Guest guest = guestService.findGuest(data.guestId());
-        Room room = roomService.findRoom(data.roomId());
+    public ReservationResDto updateReservation(UUID id, ReservationReqDto data) {
+        Reservation reservation = findReservationEntity(id);
+        Guest guest = guestService.findGuestEntity(data.guestId());
+        Room room = roomService.findRoomEntity(data.roomId());
 
         reservation.setGuest(guest);
         reservation.setRoom(room);
@@ -79,14 +84,27 @@ public class ReservationService {
         if (data.status() != null) reservation.setStatus(data.status());
 
         reservationRepository.save(reservation);
-        return reservation;
+        return convertToResDto(reservation);
     }
 
-    public void deleteReservation(UUID idReservation) {
+    @Override
+    public void delete(UUID id) {
         try {
-            reservationRepository.deleteById(idReservation);
+            reservationRepository.deleteById(id);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao deletar reserva: " + e);
+            throw new RuntimeException("Erro ao deletar reserva: " + e.getMessage());
         }
+    }
+
+    private ReservationResDto convertToResDto(Reservation reservation) {
+        return new ReservationResDto(
+                reservation.getId(),
+                reservation.getGuest().getId(),
+                reservation.getRoom().getId(),
+                reservation.getReservationDate(),
+                reservation.getCheckInDate(),
+                reservation.getCheckOutDate(),
+                reservation.getStatus()
+        );
     }
 }

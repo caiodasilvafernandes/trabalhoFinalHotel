@@ -8,8 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 
 @Entity
 @Table(name = "stays")
@@ -17,10 +16,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Stay {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID idStay;
+public class Stay extends BaseEntity {
 
     @OneToOne
     @JoinColumn(name = "reservation_id")
@@ -31,5 +27,5 @@ public class Stay {
 
     @JsonIgnore
     @OneToMany(mappedBy = "stay", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<ServiceConsumption> consumptions;
+    private Set<ServiceConsumption> consumptions;
 }

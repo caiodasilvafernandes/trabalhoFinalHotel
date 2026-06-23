@@ -3,55 +3,69 @@ package com.backend.hotel_v1.service;
 import com.backend.hotel_v1.domain.dto.ServiceReqDto;
 import com.backend.hotel_v1.domain.dto.ServiceResDto;
 import com.backend.hotel_v1.domain.repositories.ServiceRepository;
+import com.backend.hotel_v1.exception.ResourceNotFoundException;
 import com.backend.hotel_v1.model.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 @org.springframework.stereotype.Service
-public class ServiceService {
+public class ServiceService implements CrudService<ServiceResDto> {
 
     @Autowired
     private ServiceRepository serviceRepository;
 
-    public Service createService(ServiceReqDto data) {
+    public ServiceResDto createService(ServiceReqDto data) {
         Service service = new Service();
         service.setServiceName(data.serviceName());
         service.setPrice(data.price());
         serviceRepository.save(service);
-        return service;
+        return convertToResDto(service);
     }
 
-    public Service findService(UUID idService) {
-        return serviceRepository.findById(idService)
-                .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado"));
+    @Override
+    public ServiceResDto findById(UUID id) {
+        return findById(id, false);
     }
 
-    public List<ServiceResDto> getFilteredServices(int pag, int tam, String serviceName) {
+    // Sobrecarga de método
+    public ServiceResDto findById(UUID id, boolean activeOnly) {
+        Service service = serviceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado"));
+        return convertToResDto(service);
+    }
+
+    public Service findServiceEntity(UUID id) {
+        return serviceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado"));
+    }
+
+    public Page<ServiceResDto> getFilteredServices(String serviceName, Pageable pageable) {
         serviceName = (serviceName != null) ? serviceName : "";
-        Pageable pageable = PageRequest.of(pag, tam);
         Page<Service> services = serviceRepository.queryGetFilteredServices(serviceName, pageable);
-        return services.map(s -> new ServiceResDto(s.getIdService(), s.getServiceName(), s.getPrice()))
-                .stream().toList();
+        return services.map(this::convertToResDto);
     }
 
-    public Service updateService(UUID idService, ServiceReqDto data) {
-        Service service = findService(idService);
+    public ServiceResDto updateService(UUID id, ServiceReqDto data) {
+        Service service = findServiceEntity(id);
         service.setServiceName(data.serviceName());
         service.setPrice(data.price());
         serviceRepository.save(service);
-        return service;
+        return convertToResDto(service);
     }
 
-    public void deleteService(UUID idService) {
+    @Override
+    public void delete(UUID id) {
         try {
-            serviceRepository.deleteById(idService);
+            serviceRepository.deleteById(id);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao deletar serviço: " + e);
+            throw new RuntimeException("Erro ao deletar serviço: " + e.getMessage());
         }
+    }
+
+    private ServiceResDto convertToResDto(Service service) {
+        return new ServiceResDto(service.getId(), service.getServiceName(), service.getPrice());
     }
 }

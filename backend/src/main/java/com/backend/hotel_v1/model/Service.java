@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "services")
@@ -16,10 +15,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Service {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID idService;
+public class Service extends BaseEntity {
 
     private String serviceName;
     private Double price;

@@ -1,0 +1,836 @@
+{
+	"info": {
+		"_postman_id": "84c8a245-ef9a-4c28-bb28-2b87e22137bc",
+		"name": "Hotel API - Caiodasilvafernandes/TrabalhoFinalHotel",
+		"description": "Coleção do Postman para testar as rotas da API de Gestão Hoteleira.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Guest CRUD",
+			"item": [
+				{
+					"name": "Create Guest",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Eduardo Frigo\",\n  \"cpf\": \"123.456.789-10\",\n  \"phone\": \"(41) 99999-8888\",\n  \"email\": \"eduardo.frigo@example.com\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/guests",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Guests (Pagination, Sorting & Filters)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/guests?page=0&size=10&sort=name,asc&name=Eduardo",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guests"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "name,asc"
+								},
+								{
+									"key": "name",
+									"value": "Eduardo"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Guest by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/guests/UUID-DO-HOSPEDE",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guests",
+								"UUID-DO-HOSPEDE"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Guest",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Eduardo Frigo Silva\",\n  \"cpf\": \"123.456.789-10\",\n  \"phone\": \"(41) 98888-7777\",\n  \"email\": \"eduardo.silva@example.com\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/guests/UUID-DO-HOSPEDE",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guests",
+								"UUID-DO-HOSPEDE"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Guest",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/guests/UUID-DO-HOSPEDE",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guests",
+								"UUID-DO-HOSPEDE"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Room CRUD",
+			"item": [
+				{
+					"name": "Create Room",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"roomNumber\": \"101\",\n  \"roomType\": \"SUITE\",\n  \"dailyRate\": 250.00,\n  \"roomStatus\": \"LIVRE\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/rooms",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"rooms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Rooms (Pagination, Sorting & Filters)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/rooms?page=0&size=10&sort=price,asc&category=SUITE",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"rooms"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "price,asc"
+								},
+								{
+									"key": "category",
+									"value": "SUITE"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Room by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/rooms/UUID-DO-QUARTO",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"rooms",
+								"UUID-DO-QUARTO"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Room",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"roomNumber\": \"101\",\n  \"roomType\": \"SUITE\",\n  \"dailyRate\": 280.00,\n  \"roomStatus\": \"RESERVADO\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/rooms/UUID-DO-QUARTO",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"rooms",
+								"UUID-DO-QUARTO"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Room",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/rooms/UUID-DO-QUARTO",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"rooms",
+								"UUID-DO-QUARTO"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reservation CRUD",
+			"item": [
+				{
+					"name": "Create Reservation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"guestId\": \"UUID-DO-HOSPEDE\",\n  \"roomId\": \"UUID-DO-QUARTO\",\n  \"checkInDate\": \"2026-07-01T14:00:00.000+00:00\",\n  \"checkOutDate\": \"2026-07-10T12:00:00.000+00:00\",\n  \"status\": \"PENDENTE\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/reservations",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reservations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Reservations (Pagination, Sorting & Filters)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reservations?page=0&size=10&sort=reservationDate,desc&status=CONFIRMED",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reservations"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "reservationDate,desc"
+								},
+								{
+									"key": "status",
+									"value": "CONFIRMED"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Reservation by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reservations/UUID-DA-RESERVA",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reservations",
+								"UUID-DA-RESERVA"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Reservation",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"guestId\": \"UUID-DO-HOSPEDE\",\n  \"roomId\": \"UUID-DO-QUARTO\",\n  \"checkInDate\": \"2026-07-01T14:00:00.000+00:00\",\n  \"checkOutDate\": \"2026-07-10T12:00:00.000+00:00\",\n  \"status\": \"CONFIRMADA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/reservations/UUID-DA-RESERVA",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reservations",
+								"UUID-DA-RESERVA"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Reservation",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reservations/UUID-DA-RESERVA",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reservations",
+								"UUID-DA-RESERVA"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Service CRUD",
+			"item": [
+				{
+					"name": "Create Service",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"serviceName\": \"Café da manhã Premium\",\n  \"price\": 45.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/services",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"services"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Services",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/services?page=0&size=10&sort=serviceName,asc&serviceName=Premium",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"services"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "serviceName,asc"
+								},
+								{
+									"key": "serviceName",
+									"value": "Premium"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Service by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/services/UUID-DO-SERVICO",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"services",
+								"UUID-DO-SERVICO"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Service",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"serviceName\": \"Café da manhã Premium e Almoço\",\n  \"price\": 90.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/services/UUID-DO-SERVICO",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"services",
+								"UUID-DO-SERVICO"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Service",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/services/UUID-DO-SERVICO",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"services",
+								"UUID-DO-SERVICO"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Stay CRUD",
+			"item": [
+				{
+					"name": "Create Stay",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reservationId\": \"UUID-DA-RESERVA\",\n  \"actualCheckIn\": \"2026-07-01T14:15:00\",\n  \"actualCheckOut\": null\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/stays",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"stays"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Stays",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/stays?page=0&size=10&sort=actualCheckIn,desc",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"stays"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "actualCheckIn,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Stay by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/stays/UUID-DA-ESTADIA",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"stays",
+								"UUID-DA-ESTADIA"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Stay",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reservationId\": \"UUID-DA-RESERVA\",\n  \"actualCheckIn\": \"2026-07-01T14:15:00\",\n  \"actualCheckOut\": \"2026-07-10T11:45:00\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/stays/UUID-DA-ESTADIA",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"stays",
+								"UUID-DA-ESTADIA"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Stay",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/stays/UUID-DA-ESTADIA",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"stays",
+								"UUID-DA-ESTADIA"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ServiceConsumption CRUD",
+			"item": [
+				{
+					"name": "Create Service Consumption",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"stayId\": \"UUID-DA-ESTADIA\",\n  \"serviceId\": \"UUID-DO-SERVICO\",\n  \"quantity\": 2\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/consumptions",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"consumptions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Service Consumptions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/consumptions?page=0&size=10&sort=quantity,desc",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"consumptions"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "quantity,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Service Consumption by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/consumptions/UUID-DO-CONSUMO",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"consumptions",
+								"UUID-DO-CONSUMO"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Service Consumption",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"stayId\": \"UUID-DA-ESTADIA\",\n  \"serviceId\": \"UUID-DO-SERVICO\",\n  \"quantity\": 3\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/consumptions/UUID-DO-CONSUMO",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"consumptions",
+								"UUID-DO-CONSUMO"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Service Consumption",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/consumptions/UUID-DO-CONSUMO",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"consumptions",
+								"UUID-DO-CONSUMO"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

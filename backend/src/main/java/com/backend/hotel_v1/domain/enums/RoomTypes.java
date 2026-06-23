@@ -2,9 +2,10 @@ package com.backend.hotel_v1.domain.enums;
 
 public enum RoomTypes {
     SUITE("suite"),
-    INDIVIDUAL("individual");
+    INDIVIDUAL("individual"),
+    LUXURY("luxury");
 
-    private String types;
+    private final String types;
 
     RoomTypes(String role){
         this.types = role;

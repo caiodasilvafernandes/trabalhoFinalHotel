@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "rooms")
@@ -18,10 +17,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Room {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID idRoom;
+public class Room extends BaseEntity {
 
     private String roomNumber;
 

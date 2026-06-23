@@ -2,78 +2,125 @@ package com.backend.hotel_v1.controller;
 
 import com.backend.hotel_v1.domain.dto.RoomReqDto;
 import com.backend.hotel_v1.domain.dto.RoomResDto;
-import com.backend.hotel_v1.model.Room;
 import com.backend.hotel_v1.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.*;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Tag(name = "Quartos", description = "Rota para requisições de quartos")
 @RestController
-@RequestMapping("/room")
+@RequestMapping("/rooms")
 public class RoomController {
 
     @Autowired
     private RoomService roomService;
 
-    @Operation(summary = "Cria Quarto",
-               description = "Contém operações de serialização, validação e criação de quartos",
-               responses = @ApiResponse(responseCode = "200",
-                                        description = "Quarto Criado com Sucesso!",
-                                        content = @Content(mediaType = "application/json",
-                                                           schema = @Schema(implementation = Room.class))))
+    @Operation(summary = "Cria Quarto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Quarto criado com sucesso!",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = RoomResDto.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos")
+    })
     @PostMapping
-    public ResponseEntity<Room> create(@RequestBody RoomReqDto req) {
-        Room room = this.roomService.createRoom(req);
-        return ResponseEntity.ok(room);
+    public ResponseEntity<RoomResDto> create(@RequestBody RoomReqDto req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(roomService.createRoom(req));
     }
 
-    @Operation(summary = "Lista Quartos com filtro",
-               description = "Executa a operação de consulta com opção de filtros por número, status e tipo do quarto",
-               responses = @ApiResponse(responseCode = "200",
-                                        description = "Lista de Quartos:",
-                                        content = @Content(mediaType = "application/json",
-                                                           schema = @Schema(implementation = RoomResDto.class))))
+    @Operation(summary = "Busca Quarto por ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Quarto encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = RoomResDto.class))),
+            @ApiResponse(responseCode = "404", description = "Quarto não encontrado")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<RoomResDto> findById(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "false") boolean activeOnly) {
+
+        return ResponseEntity.ok(roomService.findById(id, activeOnly));
+    }
+
+    @Operation(summary = "Lista Quartos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso!",
+                    content = @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(
+                                    schema = @Schema(implementation = RoomResDto.class)
+                            )
+                    ))
+    })
     @GetMapping
-    public ResponseEntity<List<RoomResDto>> listRooms(@RequestParam(defaultValue = "0") int pag,
-                                                       @RequestParam(defaultValue = "10") int tam,
-                                                       @RequestParam(defaultValue = "") String roomNumber,
-                                                       @RequestParam(defaultValue = "") String roomStatus,
-                                                       @RequestParam(defaultValue = "") String roomType) {
-        List<RoomResDto> rooms = this.roomService.getFilteredRooms(pag, tam, roomNumber, roomStatus, roomType);
-        return ResponseEntity.ok(rooms);
+    public ResponseEntity<List<RoomResDto>> listRooms(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "roomNumber,asc") String sort,
+            @RequestParam(defaultValue = "") String roomNumber,
+            @RequestParam(defaultValue = "") String roomStatus,
+            @RequestParam(defaultValue = "") String roomType,
+            @RequestParam(defaultValue = "") String category) {
+
+        String finalRoomType = roomType;
+        if (finalRoomType.isEmpty() && !category.isEmpty()) {
+            finalRoomType = category;
+        }
+
+        String[] sortParams = sort.split(",");
+        String sortProp = sortParams[0];
+
+        if (sortProp.equalsIgnoreCase("price")) {
+            sortProp = "dailyRate";
+        }
+
+        Sort sortOrder = Sort.by(
+                sortParams.length > 1 && sortParams[1].equalsIgnoreCase("desc")
+                        ? Sort.Direction.DESC
+                        : Sort.Direction.ASC,
+                sortProp
+        );
+
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        Page<RoomResDto> rooms =
+                roomService.getFilteredRooms(roomNumber, roomStatus, finalRoomType, pageable);
+
+        return ResponseEntity.ok(rooms.getContent());
     }
 
-    @Operation(summary = "Atualiza Quarto",
-               description = "Atualiza os dados de um quarto existente pelo seu identificador",
-               responses = @ApiResponse(responseCode = "201",
-                                        description = "Quarto Atualizado com Sucesso!",
-                                        content = @Content(mediaType = "application/json",
-                                                           schema = @Schema(implementation = Room.class))))
-    @PutMapping
-    public ResponseEntity<Room> updateRoom(@RequestParam UUID idRoom,
-                                           @RequestBody RoomReqDto req) {
-        Room room = this.roomService.updateRoom(idRoom, req);
-        return ResponseEntity.status(201).body(room);
+    @Operation(summary = "Atualiza Quarto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Atualizado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = RoomResDto.class)))
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<RoomResDto> updateRoom(
+            @PathVariable UUID id,
+            @RequestBody RoomReqDto req) {
+
+        return ResponseEntity.ok(roomService.updateRoom(id, req));
     }
 
-    @Operation(summary = "Deleta Quarto",
-               description = "Remove um quarto do sistema pelo seu identificador",
-               responses = @ApiResponse(responseCode = "200",
-                                        description = "Quarto Deletado com Sucesso!",
-                                        content = @Content(mediaType = "application/json",
-                                                           schema = @Schema(implementation = String.class))))
-    @DeleteMapping
-    public ResponseEntity<String> deleteRoom(@RequestParam UUID idRoom) {
-        this.roomService.deleteRoom(idRoom);
-        return ResponseEntity.ok("Quarto deletado com sucesso.");
+    @Operation(summary = "Deleta Quarto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Deletado com sucesso")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRoom(@PathVariable UUID id) {
+        roomService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -15,10 +15,13 @@ public interface StayRepository extends JpaRepository<Stay, UUID> {
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM Stay s WHERE s.idStay = :idStay")
-    void deleteStayById(@Param("idStay") UUID idStay);
+    @Query("DELETE FROM Stay s WHERE s.id = :id")
+    void deleteStayById(@Param("id") UUID id);
 
     @Query("SELECT s FROM Stay s WHERE " +
-           "(:reservationId IS NULL OR s.reservation.idReservation = :reservationId)")
+           "(:reservationId IS NULL OR s.reservation.id = :reservationId)")
     Page<Stay> queryGetFilteredStays(@Param("reservationId") UUID reservationId, Pageable pageable);
+
+    // Método derivado para filtro por reserva
+    Page<Stay> findByReservationId(UUID reservationId, Pageable pageable);
 }

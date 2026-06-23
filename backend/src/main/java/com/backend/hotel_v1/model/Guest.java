@@ -2,34 +2,38 @@ package com.backend.hotel_v1.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Table(name = "guests")
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class Guest {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID idGuest;
-
-    private String name;
-    private String cpf;
-    private String phone;
-    private String email;
-
-    private LocalDateTime created_at = LocalDateTime.now();
+public class Guest extends Person {
 
     @JsonIgnore
     @OneToMany(mappedBy = "guest", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Reservation> reservations;
+
+    // Sobrecarga de construtores
+    public Guest() {
+        super();
+    }
+
+    public Guest(String name) {
+        super();
+        this.setName(name);
+    }
+
+    public Guest(String name, String cpf) {
+        super();
+        this.setName(name);
+        this.setCpf(cpf);
+    }
+
+    public Guest(String name, String cpf, String phone, String email) {
+        super(name, cpf, phone, email, true);
+    }
 }

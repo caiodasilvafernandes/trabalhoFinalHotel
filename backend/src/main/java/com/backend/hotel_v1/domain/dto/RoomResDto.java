@@ -5,5 +5,5 @@ import com.backend.hotel_v1.domain.enums.RoomTypes;
 
 import java.util.UUID;
 
-public record RoomResDto(UUID idRoom, String roomNumber, RoomTypes roomType, Double dailyRate, RoomStatus roomStatus) {
+public record RoomResDto(UUID id, String roomNumber, RoomTypes roomType, Double dailyRate, RoomStatus roomStatus) {
 }

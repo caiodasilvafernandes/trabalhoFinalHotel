@@ -3,82 +3,78 @@ package com.backend.hotel_v1.service;
 import com.backend.hotel_v1.domain.dto.GuestReqDto;
 import com.backend.hotel_v1.domain.dto.GuestResDto;
 import com.backend.hotel_v1.domain.repositories.GuestRepository;
+import com.backend.hotel_v1.exception.ResourceNotFoundException;
 import com.backend.hotel_v1.model.Guest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
-public class GuestService {
+public class GuestService implements CrudService<GuestResDto> {
 
     @Autowired
     private GuestRepository guestRepository;
 
-    public Guest createGuest(GuestReqDto data){
-        Guest newGuest = new Guest();
-
-        newGuest.setName(data.name());
-        newGuest.setCpf(data.cpf());
-        newGuest.setPhone(data.phone());
-        newGuest.setEmail(data.email());
-
+    public GuestResDto createGuest(GuestReqDto data) {
+        Guest newGuest = new Guest(data.name(), data.cpf(), data.phone(), data.email());
         guestRepository.save(newGuest);
-
-        return newGuest;
+        return convertToResDto(newGuest);
     }
 
-    public Guest findGuest(UUID idGuest){
-        return guestRepository
-                .findById(idGuest)
-                .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado"));
+    @Override
+    public GuestResDto findById(UUID id) {
+        return findById(id, false);
     }
 
-    public List<GuestResDto> getFiltredGuests(int pag,
-                                               int tam,
-                                               String name,
-                                               String cpf,
-                                               String phone,
-                                               String email){
+    // Sobrecarga de método
+    public GuestResDto findById(UUID id, boolean activeOnly) {
+        Guest guest = guestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Hóspede não encontrado"));
+        if (activeOnly && Boolean.FALSE.equals(guest.getActive())) {
+            throw new ResourceNotFoundException("Hóspede inativo");
+        }
+        return convertToResDto(guest);
+    }
 
+    // Uso interno de outros services que precisam da entidade
+    public Guest findGuestEntity(UUID id) {
+        return guestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Hóspede não encontrado"));
+    }
+
+    public Page<GuestResDto> getFilteredGuests(String name, String cpf, String phone, String email, Pageable pageable) {
         name = (name != null) ? name : "";
         cpf = (cpf != null) ? cpf : "";
         phone = (phone != null) ? phone : "";
         email = (email != null) ? email : "";
 
-        Pageable pageable = PageRequest.of(pag, tam);
-
-        Page<Guest> listGuest = this.guestRepository.querygGetFiltredGuest(name,cpf,phone,email,pageable);
-
-        return listGuest.map(guest -> new GuestResDto(guest.getIdGuest(),
-                                                            guest.getName(),
-                                                            guest.getCpf(),
-                                                            guest.getPhone(),
-                                                            guest.getEmail())).stream().toList();
+        Page<Guest> listGuest = this.guestRepository.querygGetFiltredGuest(name, cpf, phone, email, pageable);
+        return listGuest.map(this::convertToResDto);
     }
 
-    public Guest updateGuest(UUID idGuest, GuestReqDto data){
-        Guest guest = this.findGuest(idGuest);
-
+    public GuestResDto updateGuest(UUID id, GuestReqDto data) {
+        Guest guest = findGuestEntity(id);
         guest.setName(data.name());
         guest.setCpf(data.cpf());
         guest.setPhone(data.phone());
         guest.setEmail(data.email());
-
         guestRepository.save(guest);
-
-        return guest;
+        return convertToResDto(guest);
     }
 
-    public void deleteGuest(UUID idGuest){
-        try{
-            guestRepository.deleteById(idGuest);
+    @Override
+    public void delete(UUID id) {
+        try {
+            guestRepository.deleteById(id);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao deletar visitante: " + e);
+            throw new RuntimeException("Erro ao deletar hóspede: " + e.getMessage());
         }
+    }
+
+    private GuestResDto convertToResDto(Guest guest) {
+        return new GuestResDto(guest.getId(), guest.getName(), guest.getCpf(), guest.getPhone(), guest.getEmail());
     }
 }

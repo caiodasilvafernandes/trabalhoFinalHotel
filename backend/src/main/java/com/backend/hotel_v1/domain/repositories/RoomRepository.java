@@ -21,4 +21,8 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
                                      @Param("roomStatus") RoomStatus roomStatus,
                                      @Param("roomType") RoomTypes roomType,
                                      Pageable pageable);
+
+    // Métodos derivados para filtros
+    Page<Room> findByRoomType(RoomTypes roomType, Pageable pageable);
+    Page<Room> findByRoomStatus(RoomStatus roomStatus, Pageable pageable);
 }

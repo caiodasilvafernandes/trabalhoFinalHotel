@@ -14,10 +14,15 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
 
     @Query("SELECT r FROM Reservation r WHERE " +
            "(:status IS NULL OR r.status = :status) AND " +
-           "(:guestId IS NULL OR r.guest.idGuest = :guestId) AND " +
-           "(:roomId IS NULL OR r.room.idRoom = :roomId)")
+           "(:guestId IS NULL OR r.guest.id = :guestId) AND " +
+           "(:roomId IS NULL OR r.room.id = :roomId)")
     Page<Reservation> queryGetFilteredReservations(@Param("status") ReservationStatus status,
                                                    @Param("guestId") UUID guestId,
                                                    @Param("roomId") UUID roomId,
                                                    Pageable pageable);
+
+    // Métodos derivados para filtros
+    Page<Reservation> findByStatus(ReservationStatus status, Pageable pageable);
+    Page<Reservation> findByGuestId(UUID guestId, Pageable pageable);
+    Page<Reservation> findByRoomId(UUID roomId, Pageable pageable);
 }

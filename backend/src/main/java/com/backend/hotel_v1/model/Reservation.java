@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
-import java.util.UUID;
 
 @Entity
 @Table(name = "reservations")
@@ -17,10 +16,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Reservation {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID idReservation;
+public class Reservation extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "guest_id")
@@ -34,6 +30,7 @@ public class Reservation {
     private Date checkInDate;
     private Date checkOutDate;
 
+    @Enumerated(EnumType.STRING)
     private ReservationStatus status = ReservationStatus.PENDENTE;
 
     @JsonIgnore
